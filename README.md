@@ -9,3 +9,6 @@
 * **ISSUER**: The name of the service (e.g., “Facebook”). As with the previous field, all special characters must be encoded. (e.g., “U of T” becomes “U%20of%20T”.)
 
 Not sure if we need to consider the **space** or not.
+
+# Part 1.2
+hmac has been correctly generated, still need TOTP to be done :)
