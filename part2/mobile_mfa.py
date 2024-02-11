@@ -25,7 +25,7 @@ class BioConnect:
 	userId			= ''
 	authenticatorId		= ''
 	stepupId		= ''
-
+	user_verification = ''
 	# ===== login: Authenticates and obtains access credentials
 
 	def login(self):
@@ -216,37 +216,84 @@ class BioConnect:
 
 
 	# ===== getAuthenticatorStatus: Mobile phone registration status
-
+	# self implemented function 1
 	def getAuthenticatorStatus(self):
 
-		# >>> Add code here to call
-		#    .../v2/users/<userId>/authenicators/<authenticatorId>
-		# and process the response
+		url = 'https://%s/v2/users/%s/authenticators/%s' % (hostname, self.userId, self.authenticatorId)
+		
+		headers = {
+			'Content-Type':		'application/json',
+			'accept':		'application/json',
+			'bcaccesskey':		self.bcaccesskey,
+			'bcentitykey':		self.bcentitykey,
+			'bctoken':		self.bctoken
+		}
+		# Send our GET request to the server
+		result = requests.get(url, headers=headers)
+		
+		# get json data (dict in py)
+		result = result.json()
 
+		status = False
+		if result['status'] == 'active':
+			status = True
+
+		bio_modalities = False
+		if result['face_status'] == 'enrolled' or result['voice_status'] == 'enrolled' or result['fingerprint_status'] == 'enrolled':
+			bio_modalities = True
+
+		if status and bio_modalities:
+			return('active')
+		
 		return('')
 
 
 	# ===== sendStepup: Pushes an authentication request to the mobile app
-
+	# self implemented function 2
 	def sendStepup(self,
 		transactionId = '%d' % int(time.time()),
 		message='Login request'):
 
-		# >>> Add code here to call
-		#     .../v2/user_verifications
-		# to push an authentication request to the mobile device
+		url = 'https://%s/v2/user_verifications' % hostname
 
-		pass
+		headers = {
+			'Content-Type':		'application/json',
+			'accept':		'application/json',
+			'bcaccesskey':		self.bcaccesskey,
+			'bcentitykey':		self.bcentitykey,
+			'bctoken':		self.bctoken
+		}
 
+		data = {
+			'user_uuid':		self.userId,
+			'transaction_id':		"hello darkness my old friend",
+			'message':		"Login request",
+		}
+
+		# Send our POST request to the server
+		result = requests.post(url, data=json.dumps(data), headers=headers)
+
+		self.user_verification = result.json()['user_verification']['uuid']
+		
 	# ===== getStepupStatus: Fetches the status of the user auth request
-
+	# self implemented function 3
 	def getStepupStatus(self):
 
-		# >>> Add code here to call
-		#     .../v2/user_verifications/<verificationId>
-		# to poll for the current status of the verification
+		url = 'https://%s/v2/user_verifications/%s' % (hostname, self.user_verification)
+		
+		headers = {
+			'Content-Type':		'application/json',
+			'accept':		'application/json',
+			'bcaccesskey':		self.bcaccesskey,
+			'bcentitykey':		self.bcentitykey,
+			'bctoken':		self.bctoken
+		}
+		# Send our GET request to the server
+		result = requests.get(url, headers=headers)
 
-		return('declined')
+		status = result.json()['user_verification']['status']
+
+		return(status)
 
 
 	# ===== deleteUser: Deletes the user and mobile phone entries
