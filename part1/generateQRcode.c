@@ -41,7 +41,7 @@ main(int argc, char * argv[])
 	hex_string_to_binary(secret_hex, binary_data);
 
     // Prepare the buffer for the result. Size depends on the expected output size of the base32 encoding.
-    size_t result_size = secret_len * 2; // Example size, adjust as necessary
+    size_t result_size = secret_len * 2; 
     uint8_t *result = malloc(result_size);
 
 	// Call the base32_encode function

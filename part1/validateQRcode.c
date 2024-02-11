@@ -1,9 +1,61 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
+#include <time.h>
+#include "lib/sha1.h"
+
 #define SHA1_DIGEST_LENGTH 20
 
-#include "lib/sha1.h"
+#define TOTP_TIME_STEP 30
+#define TOTP_DIGITS 6
+#define TOTP_MODULO 1000000 // 10^6 for a 6 digit code
+#define BLOCK_SIZE 64 // Block size for SHA1 --> 512 bits = 64 byte
+
+void hmac_sha1(const uint8_t *key, int key_length, const uint8_t *data, int data_length, uint8_t *hmac_output) {
+    uint8_t k_ipad[BLOCK_SIZE] = {0};
+    uint8_t k_opad[BLOCK_SIZE] = {0};
+    SHA1_INFO ctx;
+    uint8_t sha_inner[SHA1_DIGEST_LENGTH];
+    uint8_t sha_outer[SHA1_DIGEST_LENGTH];
+
+    // If key is longer than block size, use its SHA1 hash instead
+    if (key_length > BLOCK_SIZE) {
+        sha1_init(&ctx);
+        sha1_update(&ctx, key, key_length);
+        sha1_final(&ctx, k_ipad);
+        memcpy(k_opad, k_ipad, SHA1_DIGEST_LENGTH);
+    } else {
+        memcpy(k_ipad, key, key_length);
+        memcpy(k_opad, key, key_length);
+    }
+
+    // XOR key with ipad and opad values
+	// My own Blog: https://github.com/kkli08/HMAC/wiki#hmac
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+		// 0x36 ->> 00110110
+        k_ipad[i] ^= 0x36;
+		// 0x5C ->> 01011100
+        k_opad[i] ^= 0x5C;
+    }
+
+	// HMAC = H(k_opad, H(k_ipad, message))
+
+    // Inner hash
+    sha1_init(&ctx);
+    sha1_update(&ctx, k_ipad, BLOCK_SIZE);
+    sha1_update(&ctx, data, data_length);
+    sha1_final(&ctx, sha_inner);
+
+    // Outer hash
+    sha1_init(&ctx);
+    sha1_update(&ctx, k_opad, BLOCK_SIZE);
+    sha1_update(&ctx, sha_inner, SHA1_DIGEST_LENGTH);
+    sha1_final(&ctx, sha_outer);
+
+    memcpy(hmac_output, sha_outer, SHA1_DIGEST_LENGTH);
+}
+
 
 // Function to convert hex string to binary
 void hex_string_to_binary(const char *hex_string, uint8_t *binary_output) {
@@ -16,29 +68,44 @@ void hex_string_to_binary(const char *hex_string, uint8_t *binary_output) {
 static int
 validateTOTP(char * secret_hex, char * TOTP_string)
 {
-	SHA1_INFO ctx;
-	uint8_t sha[SHA1_DIGEST_LENGTH];
-	uint8_t secret_binary[SHA1_DIGEST_LENGTH];
-	int secret_hex_length = strlen(secret_hex);
-    int secret_binary_length = secret_hex_length / 2;
-
-	hex_string_to_binary(secret_hex, secret_binary);
-
-	// SHA1 Operation
-	sha1_init(&ctx);
-    sha1_update(&ctx, secret_binary, secret_binary_length);
-	sha1_final(&ctx, sha);
-
-	char hmac_str[SHA1_DIGEST_LENGTH * 2 + 1];
-    for (int i = 0; i < SHA1_DIGEST_LENGTH; i++) {
-        sprintf(&hmac_str[i * 2], "%02x", sha[i]);
+	// Step 1: Get the Current Time
+    uint64_t time_counter = (uint64_t)time(NULL) / TOTP_TIME_STEP;
+	// Convert time_counter to byte array
+    uint8_t time_bytes[8];
+    for (int i = 7; i >= 0; i--) {
+        time_bytes[i] = time_counter & 0xFF;
+        time_counter >>= 8;
     }
 
-	printf("Generated secret code by sha1: %s\n", hmac_str);
+	// Step 2: Create an HMAC-SHA1 Value
+    uint8_t hmac[SHA1_DIGEST_LENGTH];
+    uint8_t secret_binary[SHA1_DIGEST_LENGTH];
+    int secret_hex_length = strlen(secret_hex);
+    int secret_binary_length = secret_hex_length / 2;
+    hex_string_to_binary(secret_hex, secret_binary);
+    
+    // Use HMAC-SHA1
+    hmac_sha1(secret_binary, secret_binary_length, time_bytes, sizeof(time_bytes), hmac);
 
-	
-	
-    return strcmp(hmac_str, TOTP_string) == 0;
+    // Step 3: Dynamic Truncation
+    int offset = hmac[SHA1_DIGEST_LENGTH - 1] & 0xF;
+    uint32_t truncatedHash = 0;
+    for (int i = 0; i < 4; ++i) {
+        truncatedHash <<= 8;
+        truncatedHash |= hmac[offset + i];
+    }
+
+    truncatedHash &= 0x7FFFFFFF; // Remove the most significant bit
+
+    // Step 4: Generate TOTP Value
+    uint32_t totp = truncatedHash % TOTP_MODULO;
+    
+    // Convert to string and compare
+    char totp_str[7]; // 6 digits + null terminator
+    snprintf(totp_str, sizeof(totp_str), "%06u", totp);
+
+	printf("Generated totp code: %s\n", totp_str);
+    return strcmp(totp_str, TOTP_string) == 0;
 }
 
 
