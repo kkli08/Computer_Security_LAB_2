@@ -1,5 +1,5 @@
 #Ke Li, 1005842554, damian.li@mail.utoronto.ca
-#
+#Weiyu Zhang
 
 Part 1
     * 1.1
@@ -7,3 +7,13 @@ Part 1
     * 1.2
 
 Part 2
+    * getAuthenticatorStatus
+        Form the user authentication url and use GET API call, return 'active' if the status is active 
+        and at least one of the biometric modalities is enrolled.
+
+    * sendStepup
+        Form the user verification url and use POST API call, and store the uuid from the return json
+        data into self.user_verification.
+
+    * getStepupStatus
+        Form the url and use GET API call, fetches the status of the user auth request and return the status.
