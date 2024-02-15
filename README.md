@@ -8,6 +8,8 @@
 * **ACCOUNTNAME**: The name of the account (e.g., “gibson”). Any special characters in this string (like spaces) should be properly “URL-encoded”. (I have provided a urlEncode() function that you may use for this purpose.)
 * **ISSUER**: The name of the service (e.g., “Facebook”). As with the previous field, all special characters must be encoded. (e.g., “U of T” becomes “U%20of%20T”.)
 
+[2024.2.15] part 1.1 README added.
+
 [2024.2.9] done. README needed. Not sure if we need to consider the **space** or not.
 
 # Part 1.2
