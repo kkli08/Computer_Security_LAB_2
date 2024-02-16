@@ -29,6 +29,16 @@ Part 1
 
 
     * 1.2
+    we mainly focus on generating the TOTP value:
+    Step 1: Get the current time
+
+    Step 2: Create an HMAC - SHA1 value 
+    HMAC = H(k_opad, H(k_ipad, message))
+    
+    Step 3: Dynamic Truncation
+
+    Step 4: Generate TOTP value
+
 
 Part 2
     * getAuthenticatorStatus

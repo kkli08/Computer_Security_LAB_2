@@ -19,16 +19,9 @@ void hmac_sha1(const uint8_t *key, int key_length, const uint8_t *data, int data
     uint8_t sha_inner[SHA1_DIGEST_LENGTH];
     uint8_t sha_outer[SHA1_DIGEST_LENGTH];
 
-    // If key is longer than block size, use its SHA1 hash instead
-    if (key_length > BLOCK_SIZE) {
-        sha1_init(&ctx);
-        sha1_update(&ctx, key, key_length);
-        sha1_final(&ctx, k_ipad);
-        memcpy(k_opad, k_ipad, SHA1_DIGEST_LENGTH);
-    } else {
-        memcpy(k_ipad, key, key_length);
-        memcpy(k_opad, key, key_length);
-    }
+    // copy the key into pad
+    memcpy(k_ipad, key, key_length);
+    memcpy(k_opad, key, key_length);
 
     // XOR key with ipad and opad values
 	// My own Blog: https://github.com/kkli08/HMAC/wiki#hmac

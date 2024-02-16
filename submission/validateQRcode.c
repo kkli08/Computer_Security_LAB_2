@@ -19,16 +19,9 @@ void hmac_sha1(const uint8_t *key, int key_length, const uint8_t *data, int data
     uint8_t sha_inner[SHA1_DIGEST_LENGTH];
     uint8_t sha_outer[SHA1_DIGEST_LENGTH];
 
-    // If key is longer than block size, use its SHA1 hash instead
-    if (key_length > BLOCK_SIZE) {
-        sha1_init(&ctx);
-        sha1_update(&ctx, key, key_length);
-        sha1_final(&ctx, k_ipad);
-        memcpy(k_opad, k_ipad, SHA1_DIGEST_LENGTH);
-    } else {
-        memcpy(k_ipad, key, key_length);
-        memcpy(k_opad, key, key_length);
-    }
+    // copy the key into pad
+    memcpy(k_ipad, key, key_length);
+    memcpy(k_opad, key, key_length);
 
     // XOR key with ipad and opad values
 	// My own Blog: https://github.com/kkli08/HMAC/wiki#hmac
@@ -61,6 +54,14 @@ void hmac_sha1(const uint8_t *key, int key_length, const uint8_t *data, int data
 void hex_string_to_binary(const char *hex_string, uint8_t *binary_output) {
     size_t len = strlen(hex_string);
     for (size_t i = 0; i < len; i += 2) {
+        // (hex_string + i) points to the current pair of hex char in the string
+
+	    // %2hhx will read 2 hex char(each char is 8 bits == 1 byte) and convert 
+		// them as the binary form which would be exactly 1 byte, and the format 
+		// should be store in uint8_t, which is exactly 1 byte
+		
+	    // &binary_output[i / 2] store the pair byte(1 pair for 1 byte) into the 
+		// binary output.
         sscanf(hex_string + i, "%2hhx", &binary_output[i / 2]);
     }
 }
