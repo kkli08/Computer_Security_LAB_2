@@ -31,14 +31,23 @@ Part 1
     * 1.2
     we mainly focus on generating the TOTP value:
     Step 1: Get the current time
+        TOTP algorithm defined by RFC use current time as part of the hmac calculation.
+
+        time(NULL) will return the current time in seconds and we divided it by the time step(30 seconds as default), and use it as a counter which will update every 30 seconds.(RFC 6238)
+
+        since we need to store the time in big-endian format, and ecf machine is x86-64 little-endian machince, so we need to store backwards.
 
     Step 2: Create an HMAC - SHA1 value 
     HMAC = H(k_opad, H(k_ipad, message))
-    
+    so firstly we store the time into inner and outer pad, and xor them (for inner pad we use 00110110 and outer pad we use 01011100),
+    and then we firstly put the blended key and then data into sha1_update to generate the hash value
+
+    we firstly do the inner key and use the generated hash value as the data and the outer key to generate the final hash value.
+
     Step 3: Dynamic Truncation
 
     Step 4: Generate TOTP value
-
+    the totp value is obtained by modulo 10^6 to get a 6 digit value
 
 Part 2
     * getAuthenticatorStatus
