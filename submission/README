@@ -1,5 +1,5 @@
 #Ke Li, 1005842554, damian.li@mail.utoronto.ca
-#Weiyu Zhang
+#Weiyu Zhang, 1009736706, ginne.zhang@mail.utoronto.ca
 
 Part 1
     * 1.1
@@ -13,7 +13,9 @@ Part 1
     --> secret_hex
 
         since the input value would be in hex, in order to encode the string, we
-        need firstly convert it to binary format. after convert it into binary format, we use base32_encode to encode the binary string and use the return value and concatenate it into the final url.
+        need firstly convert it to binary format. after convert it into binary format, 
+        we use base32_encode to encode the binary string and use the return value and 
+        concatenate it into the final url.
 
     --> void hex_string_to_binary(const char *hex_string, uint8_t *binary_output)
 
@@ -23,7 +25,8 @@ Part 1
         in the for loop:
             (hex_string + i) points to the current pair of hex char in the string
             
-            %2hhx will read 2 hex char(each char is 8 bits == 1 byte) and convert them as the binary form which would be exactly 1 byte, and the format should be store in uint8_t, which is exactly 1 byte
+            %2hhx will read 2 hex char(each char is 8 bits == 1 byte) and convert them as the binary form which would be exactly 1 byte, 
+            and the format should be store in uint8_t, which is exactly 1 byte
 
             &binary_output[i / 2] store the pair byte(1 pair for 1 byte) into the binary output.
 
@@ -45,6 +48,7 @@ Part 1
     we firstly do the inner key and use the generated hash value as the data and the outer key to generate the final hash value.
 
     Step 3: Dynamic Truncation
+    follow the RFC standard.
 
     Step 4: Generate TOTP value
     the totp value is obtained by modulo 10^6 to get a 6 digit value
